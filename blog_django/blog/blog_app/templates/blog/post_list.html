@@ -88,6 +88,20 @@
             margin: 0 5px;
             color: #333;
         }
+
+        .profile-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .profile-link:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -123,6 +137,7 @@
 
         {% if user.is_authenticated %}
             <a class="button-link" href="{% url 'logout' %}">Logout</a>
+            <a class="profile-link" href="{% url 'profile' %}">Profile</a> <!-- Кнопка профиля -->
         {% else %}
             <p>You are not logged in.</p>
             <a class="button-link" href="{% url 'login' %}">Login</a>

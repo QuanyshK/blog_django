@@ -1,13 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from rest_framework.generics import get_object_or_404
 
-from .models import Post, Comment
+from .models import Post, Comment, User
 from django.shortcuts import render, redirect
-from .forms import CommentForm, PostForm
+from .forms import CommentForm, PostForm, UserEditForm
 
 
 # Create your views here.
@@ -93,3 +94,24 @@ def delete_post(request, id):
         return redirect('post_list')
 
     return render(request, 'blog/delete_post.html', {'post': post})
+
+
+@login_required
+def profile_view(request):
+    user = request.user
+    following_users = user.follows.all()  
+    return render(request, 'profile.html', {'user': user, 'following_users': following_users})
+
+@login_required
+def edit_user_view(request):
+    user = request.user
+
+    if request.method == 'POST':
+        form = UserEditForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')  
+    else:
+        form = UserEditForm(instance=user)
+
+    return render(request, 'accounts/edit_user.html', {'form': form})

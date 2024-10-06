@@ -8,6 +8,8 @@ from django.contrib.auth.hashers import check_password
 
 class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
+    follows = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
+
 
     def __str__(self):
         return self.username
