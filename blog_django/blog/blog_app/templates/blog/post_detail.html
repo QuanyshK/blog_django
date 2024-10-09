@@ -99,6 +99,14 @@
         <p>{{ post.content }}</p>
 
         {% if user.is_authenticated %}
+        <form method="post">
+            {% csrf_token %}
+            {% if is_following %}
+                <button type="submit" name="unfollow">Unfollow</button>
+            {% else %}
+                <button type="submit" name="follow">Follow</button>
+            {% endif %}
+        </form>
         
             <h3>Leave a Comment</h3>
             <form method="post">
@@ -117,7 +125,7 @@
             <li>{{ comment.content }} by {{ comment.author.username }} on {{ comment.created_date }}</li>
             {% endfor %}
         </ul>
-
+        <a class="button-link" href="{% url 'post_list' %}">Back to Blog Posts</a>
         <a class="button-link" href="{% url 'edit_post' post.id %}">Edit</a>
         <a class="button-link" href="{% url 'delete_post' post.id %}">Delete</a>
     </div>

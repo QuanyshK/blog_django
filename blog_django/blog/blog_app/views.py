@@ -6,14 +6,13 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from rest_framework.generics import get_object_or_404
 
-from .models import Post, Comment, User
+from .models import Follow, Post, Comment, User
 from django.shortcuts import render, redirect
 from .forms import CommentForm, PostForm, UserEditForm
 
 
 # Create your views here.
 
-@cache_page(60)
 def post_list_view(request):
     posts = Post.objects.all().order_by('-created_date')
     paginator = Paginator(posts, 5)
@@ -28,27 +27,45 @@ def get_comment_count(post_id):
     return count
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from .models import Post, Follow
+
+@login_required
 def post_detail_view(request, id):
     post = get_object_or_404(Post, id=id)
     comments = post.comments.all().order_by('-created_date')
     comment_count = get_comment_count(post.id)
+
+    is_following = Follow.objects.filter(follower=request.user, following=post.author).exists()
+
     if request.method == 'POST':
+ 
+        if 'follow' in request.POST:
+            if not is_following and request.user != post.author:  
+                Follow.objects.create(follower=request.user, following=post.author)
+            return redirect('post_detail', id=post.id)
+        elif 'unfollow' in request.POST:
+            if is_following:
+                Follow.objects.filter(follower=request.user, following=post.author).delete()
+            return redirect('post_detail', id=post.id)
+    
         form = CommentForm(request.POST)
         if form.is_valid():
-                comment = form.save(commit=False)
-                comment.author = request.user
-                comment.post = post
-                comment.save()
-                return redirect('post_detail', id=post.id)
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.post = post
+            comment.save()
+            return redirect('post_detail', id=post.id)
     else:
         form = CommentForm()
-
 
     return render(request, 'blog/post_detail.html', {
         'post': post,
         'comments': comments,
         'comment_count': comment_count,
-        'form': form
+        'form': form,
+        'is_following': is_following,  
     })
 
 
@@ -95,12 +112,30 @@ def delete_post(request, id):
 
     return render(request, 'blog/delete_post.html', {'post': post})
 
+@login_required
+def profile_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    following_users = user.following.all()
+    followers = user.followers.all()
+
+    return render(request, 'profile.html', {
+        'user': user,
+        'following_users': following_users,
+        'followers': followers,
+    })
+@login_required
+def follow_user(request, user_id):
+    user_to_follow = get_object_or_404(User, id=user_id)
+    if user_to_follow != request.user:
+        Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
+    return redirect('profile_view', user_id=user_to_follow.id)
 
 @login_required
-def profile_view(request):
-    user = request.user
-    following_users = user.follows.all()  
-    return render(request, 'profile.html', {'user': user, 'following_users': following_users})
+def unfollow_user(request, user_id):
+    user_to_unfollow = get_object_or_404(User, id=user_id)
+    Follow.objects.filter(follower=request.user, following=user_to_unfollow).delete()
+    return redirect('profile_view', user_id=user_to_unfollow.id)
+
 
 @login_required
 def edit_user_view(request):

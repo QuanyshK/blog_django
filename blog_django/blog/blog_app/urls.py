@@ -14,5 +14,6 @@ urlpatterns = [
     path('logout/', logout, name='logout'),
     path('profile/', profile, name='profile'),
     path('user/edit/', views.edit_user_view, name='edit_user'),
-
+    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),  
+    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'), 
 ]

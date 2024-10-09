@@ -8,23 +8,16 @@ from django.contrib.auth.hashers import check_password
 
 class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
-    follows = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
-
-
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, default='/image.png')
     def __str__(self):
         return self.username
-class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
 
-    def __str__(self):
-        return self.name
 
 class Post(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
-    tags = models.ManyToManyField('Tag', related_name='posts')
 
     class Meta:
         indexes = [
@@ -46,3 +39,14 @@ class Comment(models.Model):
         ]
     def __str__(self):
         return self.content
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    bio = models.TextField(blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, default='profile_pictures/default.jpg')
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
+    following = models.ForeignKey(User, related_name='followers', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('follower', 'following')

@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
+
+from blog_app.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth import logout as auth_logout
 
@@ -35,5 +37,14 @@ def logout(request):
     auth_logout(request)
     return redirect('login')
 
+
 def profile(request):
-    return render(request, 'accounts/profile.html', {'user': request.user})
+    user = request.user
+    following_users = user.following.all()
+    followers = user.followers.all()
+
+    return render(request, 'accounts/profile.html', {
+    'user': user,
+    'following_users': following_users,
+    'followers': followers,
+})
